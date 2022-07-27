@@ -26,7 +26,7 @@ import yaml as _yaml
 import json as _json
 
 # Local Dependencies
-from runpy.io.types import ConfigType as _ConfigType
+from governor.io.types import ConfigType as _ConfigType
 
 
 class Config():

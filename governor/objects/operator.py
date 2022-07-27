@@ -26,7 +26,7 @@ from importlib import import_module as _import
 from timeit import default_timer as _timer
 
 # Local Dependencies
-from runpy.objects.types import OperatorState as _OperatorState
+from governor.objects.types import OperatorState as _OperatorState
 
 
 class Operator():
@@ -65,7 +65,7 @@ class Operator():
                           to operator method :name:.
             input_modifiable: (Optional) Dictionary that may be modified by the
                               operator method :name:, which must contain the
-                              parameter named by "runpy_shared".
+                              parameter named by "governor_shared".
             operator_: (Optional) Direct-pass of operator in case reloading
                        not needed, which is currently handled by the graph
                        controller.
@@ -190,7 +190,7 @@ class Operator():
                 self._run_init()
                 self._response = self._operator(
                     **self._input_params,
-                    runpy_shared = self._input_modifiable
+                    governor_shared = self._input_modifiable
                 )
                 self._run_close()
 

@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "runpy"
+name = "governor"
 version = "0.0.1"
 description = "A light and flexible orchestrator of any local or distributed Python code."
 authors = ["Manuel Proissl <mproissl@gmail.com>"]
