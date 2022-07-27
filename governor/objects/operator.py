@@ -53,8 +53,7 @@ class Operator():
             name: User-defined name of the operator, which does not have to
                   comply to uniqueness within the graph but reflects the
                   name of the method to run in the respective Python module.
-            module_path: Python path to operator module using dots or file
-                         path to Python script using OS-specific delimeters.
+            module_path: Python path to operator module using dots convention.
             label: (Optional) user-defined label attached to this operator,
                    which may describe the operator better than the :name:
             class_name: (Optional) Name of the class that contains the operator
