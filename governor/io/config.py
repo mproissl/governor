@@ -27,6 +27,8 @@ import json as _json
 
 # Local Dependencies
 from governor.io.types import ConfigType as _ConfigType
+from governor.io.types import config_header_parameters as _config_header_parameters
+from governor.io.types import config_payload_operator_parameters as _config_payload_operator_parameters
 
 
 class Config():
@@ -56,6 +58,7 @@ class Config():
         # Private vars by init
         self._me = "Config():"
         self._config = None
+        self._exception = ""
 
     def load(self) -> bool:
         """Load configuration into memory.
@@ -64,6 +67,7 @@ class Config():
             Flag if loading successful
         """
         try:
+            # Load config
             if self._source_type == _ConfigType.YAML:
                 with open(self._source, mode="r", encoding="UTF-8") as file:
                     self._config = _yaml.full_load(file)
@@ -74,17 +78,22 @@ class Config():
 
             elif self._source_type == _ConfigType.JSON_STRING:
                 self._config = _json.loads(self._source)
-        
+
+            # Validate config
+            self._validate()
+
             return True
         
         except (
             FileNotFoundError,
             _yaml.YAMLError,
             _json.JSONDecodeError,
-            OSError
+            OSError,
+            ValueError,
+            Exception
         ) as err:
-            pass
-        except:
+            self._exception = repr(err).replace("\n", " ")
+            self._config = None
             pass
         
         return False
@@ -93,3 +102,8 @@ class Config():
     def config(self) -> dict:
         """Raw configuration as dictionary."""
         return self._config
+
+    def _validate(self):
+        """Validate loaded configuration."""
+        
+        
