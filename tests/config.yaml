@@ -1,0 +1,12 @@
+# HEADER
+header:
+  name: RunPy Test Configuration
+  description: This is a simple test configuration script.
+
+# PAYLOAD
+payload:
+  operators:
+    - id_: O1
+      name: test_method
+    - id_: O2
+      name: another_method
