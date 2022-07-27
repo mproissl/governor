@@ -57,16 +57,39 @@ class Config():
         self._me = "Config():"
         self._config = None
 
-    def load(self):
-        """Load configuration into memory."""
+    def load(self) -> bool:
+        """Load configuration into memory.
+        
+        Returns:
+            Flag if loading successful
+        """
+        try:
+            if self._source_type == _ConfigType.YAML:
+                with open(self._source, mode="r", encoding="UTF-8") as file:
+                    self._config = _yaml.full_load(file)
 
-        if self._source_type == _ConfigType.YAML:
-            with open(self._source, mode="r", encoding="UTF-8") as file:
-                self._config = _yaml.load(file)
+            elif self._source_type == _ConfigType.JSON:
+                with open(self._source, mode="r", encoding="UTF-8") as file:
+                    self._config = _json.load(file)
 
-        elif self._source_type == _ConfigType.JSON:
-            with open(self._source, mode="r", encoding="UTF-8") as file:
-                self._config = _json.load(file)
+            elif self._source_type == _ConfigType.JSON_STRING:
+                self._config = _json.loads(self._source)
+        
+            return True
+        
+        except (
+            FileNotFoundError,
+            _yaml.YAMLError,
+            _json.JSONDecodeError,
+            OSError
+        ) as err:
+            pass
+        except:
+            pass
+        
+        return False
 
-        elif self._source_type == _ConfigType.JSON_STRING:
-            self._config = _json.loads(self._source)
+    @property
+    def config(self) -> dict:
+        """Raw configuration as dictionary."""
+        return self._config
