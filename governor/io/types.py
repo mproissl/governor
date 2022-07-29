@@ -47,14 +47,33 @@ def config_type_description():
 def config_header_parameters():
     """Configuration header parameters with descriptions."""
     return {
-        "name": "Name of the configuration, e.g. with reference to its use.",
+        "name": {
+            "description": "Name of the configuration, e.g. with reference "\
+                           "to its use.",
+            "dtype": str,
+            "default": None
+        },
 
-        "description": "Longer description of the configuration or use case "\
-                       "purpose.",
+        "description": {
+            "description": "Longer description of the configuration or use "\
+                           "case purpose.",
+            "dtype": str,
+            "default": None
+        },
 
-        "enable_multiprocessing": "Flag to create multiple processes to run "\
-                                  "operators in parallel. Default: True",
+        "enable_multiprocessing": {
+            "description": "Flag to create multiple processes to run "\
+                           "operators in parallel. Default: True",
+            "dtype": bool,
+            "default": True
+        },
 
+        "shared_data": {
+            "description": "Dictionary with globally shared data such as "\
+                           "flags, static parameters, or any other data.",
+            "dtype": dict,
+            "default": None
+        },
     }
 
 
