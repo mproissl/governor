@@ -2,7 +2,7 @@
 header:
   
   # General
-  name: RunPy Test Configuration
+  name: Governor Test Configuration
   description: This is a simple test configuration script.
 
   # Global settings
@@ -15,23 +15,45 @@ payload:
   operators:
     
     # Example operator without parameters
-    - id_: id1
+    - id_: A
       name: method_no_params
       module_path: test_modules.scripts
     
     # Example operator with parameters
-    - id_: id2
+    - id_: B
       name: method_with_params
       module_path: test_modules.scripts
       dedicated_input_params:
         param1: "p1"
         param2: 2
+      run_after: A
     
     # Example operator with parameters within class
-    - id_: id3
+    - id_: C
       name: method_with_params_in_class
       module_path: test_modules.scripts
       class_name: MyClass
       dedicated_input_params:
         param1: "p1"
         param2: 2
+      run_after: B
+
+    - id_: D
+      name: method_no_params
+      module_path: test_modules.scripts
+      run_after: B
+    
+    - id_: E
+      name: method_no_params
+      module_path: test_modules.scripts
+      run_after: B
+    
+    - id_: F
+      name: method_no_params
+      module_path: test_modules.scripts
+      run_after: B
+  
+  # Definition of variations to run
+  variations:
+
+    repeat_groups: 1
