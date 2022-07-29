@@ -235,3 +235,60 @@ class Config():
 
             # Variation repeat_groups contains known groups
             # TODO
+
+class ConfigWrapper():
+    """Simple Convenience Wrapper of Configuration."""
+
+    def __init__(self, config: Config):
+        """Initialize a new configuration wrapper.
+
+        Note:
+            Exposed properties are limited to only the
+            most used features.
+
+        Args:
+            config: Configuration from governor.io.Config()
+        """
+        # Private vars
+        self._me = "ConfigWrapper():"
+        self._config = config
+
+        # Load if not loaded
+        if self._config.config is None:
+            if not self._config.load():
+                raise ImportError(f"{self._me} Failed importing "\
+                                  f"configuration -> "\
+                                  f"{self._config.exception}")
+
+        # Reduce to config only
+        self._config = self._config.config
+
+    @property
+    def header(self):
+        return self._config["header"]
+
+    @property
+    def payload(self):
+        return self._config["payload"]
+
+    @property
+    def operators(self):
+        return self._config["payload"]["operators"]
+
+    @property
+    def variations(self):
+        if "variations" in self._config["payload"]:
+            return self._config["payload"]["variations"]
+        return None
+
+    @property
+    def header_shared_data(self):
+        if "shared_data" in self.header:
+            return self.header["shared_data"]
+        return _config_header_parameters()["shared_data"]["default"]
+
+    @property
+    def header_enable_multiprocessing(self):
+        if "enable_multiprocessing" in self.header:
+            return self.header["enable_multiprocessing"]
+        return _config_header_parameters()["enable_multiprocessing"]["default"]
