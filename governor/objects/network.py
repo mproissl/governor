@@ -25,7 +25,7 @@
 from secrets import token_urlsafe as _token_urlsafe
 
 # Local Dependencies
-from governor.io import Config as _Config
+from governor.io import ConfigWrapper as _ConfigWrapper
 
 
 class Network():
@@ -34,7 +34,7 @@ class Network():
     def __init__(self,
                  # Required inputs
                  id_: str,
-                 config: _Config,
+                 config: _ConfigWrapper,
                  # Optional inputs
                  name: str = None
                 ):
@@ -54,11 +54,11 @@ class Network():
 
         # Private vars by init
         self._me = "Network():"
-        self._operators = dict()
+        self._operators = {}
         self._edges = []
 
         # Build network
-        self._build(config.config["payload"]["operators"])
+        self._build(config.operators)
 
     @property
     def edges(self):
@@ -69,6 +69,28 @@ class Network():
     def edges_str(self):
         """String of network edges."""
         return ", ".join(str(edge) for edge in self._edges)
+
+    @property
+    def operators(self):
+        """Operator configuration."""
+        return self._operators
+
+    def operator_sequence(self) -> list:
+        """Sequence of operators based on edge order.
+
+        Returns:
+            List of operators
+        """
+        sequence_ = []
+        for idx, edge in enumerate(self._edges):
+            if idx == 0:
+                sequence_.extend([edge.source, edge.target])
+            elif edge.source != sequence_[-1]:
+                sequence_.extend([edge.source, edge.target])
+            else:
+                sequence_.append(edge.target)
+
+        return sequence_
 
     def _build(self, config_: list):
         """Build network structure based on configuration.
