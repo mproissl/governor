@@ -29,6 +29,53 @@ from timeit import default_timer as _timer
 from governor.objects.types import OperatorState as _OperatorState
 
 
+class OperatorSettings():
+    """Settings Helper for Operator() class initialization."""
+
+    def __init__(self, config: dict):
+        """Initialize new operator settings.
+
+        Args:
+            config: Operator configuration dictionary
+        """
+
+        # Private vars
+        self._me = "OperatorSettings():"
+        self._settings = {}
+        self._required = [
+            "id_",
+            "name",
+            "module_path"
+        ]
+        self._optional = [
+            "label",
+            "class_name",
+            "class_params",
+            "input_params",
+            "input_modifiable",
+            "operator_"
+        ]
+
+        # Required settings
+        for key in self._required:
+            if key not in config:
+                raise ValueError(f"{self._me} Missing required setting: {key}")
+            else:
+                self._settings[key] = config[key]
+
+        # Optional settings
+        for key in config:
+            if key in self._optional:
+                self._settings[key] = config[key]
+            else:
+                raise ValueError(f"{self._me} Unknown setting: {key}")
+
+    @property
+    def settings(self) -> dict:
+        """Operator configuration dictionary."""
+        return self._settings
+
+
 class Operator():
     """Node of directed graph representing an operator."""
 
@@ -169,8 +216,17 @@ class Operator():
         """Current raised exception string."""
         return self._exception
 
+    @property
+    def response(self) -> any:
+        """Response of run."""
+        return self._response
+
     def run(self):
-        """Run operator."""
+        """Run operator.
+
+        Returns:
+            Self
+        """
         try:
             # Run operator without input parameters
             if self._input_params is None:
@@ -192,6 +248,8 @@ class Operator():
                     governor_shared = self._input_modifiable
                 )
                 self._run_close()
+
+            return self
 
         except Exception as err:
 
