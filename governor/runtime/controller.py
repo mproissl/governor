@@ -26,9 +26,10 @@ from typing import Union as _Union
 from secrets import token_urlsafe as _token_urlsafe
 
 # Local Dependencies
-from governor.io import Config as _Config
+from governor.io import Config as _Config, ConfigWrapper as _ConfigWrapper
 from governor.io.types import ConfigType as _ConfigType
 from governor.objects.network import Network as _Network
+from governor.objects.operator import Operator as _Operator, OperatorSettings as _OperatorSettings
 from governor.runtime.memory import Memory as _Memory
 
 class Controller():
@@ -51,12 +52,17 @@ class Controller():
         self._config = None
         self._network = None
         self._memory = _Memory()
+        self._parallelize = False
+        self._executed = []
 
         # Load config
         self._load_configuration(config)
 
         # Create operator network
         self._create_network()
+
+        # Process header
+        self._process_header()
 
     def _load_configuration(self, config):
         """Load configuration provided by user."""
@@ -97,6 +103,9 @@ class Controller():
             raise ImportError(f"{self._me} Failed importing configuration -> "\
                               f"{self._config.exception}")
 
+        # Keep only wrapper for access
+        self._config = _ConfigWrapper(self._config)
+
     def _create_network(self):
         """Create operator network from configuration."""
         try:
@@ -109,4 +118,120 @@ class Controller():
             self._network = None
             raise ValueError(f"{self._me} Failed creating network from "\
                              f"configuration -> {err}") from err
-        # pylint: enable=broad-except
+
+    def _process_header(self):
+        """Process header instructions in configuration."""
+
+        # Add shared data to memory
+        shared_data = self._config.header_shared_data
+        if shared_data is not None:
+            for id_ in shared_data:
+                self._memory.shared.add(id_, shared_data[id_])
+
+        # Prepare to parallelize (TODO: prep mp)
+        self._parallelize = self._config.header_enable_multiprocessing
+
+    def run(self):
+        """Run operator network based on user configuration."""
+
+        # Sequential execution
+        #if not self._parallelize:
+        self._run_sequential()
+
+    def _run_sequential(self):
+        """Run operators in sequential order disregarding network
+           architecture.
+        """
+        # TODO Add controller instructions here (own class)
+        for id_ in self._network.operator_sequence():
+
+            # Config
+            cfg = self._network.operators[id_]
+
+            # Repeat
+            runs = 1
+            if "repeat" in cfg:
+                runs = cfg["repeat"]
+
+            # Variations
+            # TODO
+
+            # Save
+            save = None
+            if "save_output" in cfg:
+                if cfg["save_output"]:
+                    if "shared_output_name" in cfg:
+                        save = cfg["shared_output_name"]
+                    else:
+                        save = id_
+
+            # Operator
+            operator = self._get_operator(id_)
+
+            # Run
+            while runs > 0:
+                if save is None:
+                    _ = operator.run().response
+                else:
+                    self._memory.shared.update(id_, operator.run().response,\
+                                               create=True)
+
+                # Log
+                self._executed.append(id_)
+                runs -= 1
+
+    def _get_operator(self, id_: str) -> _Operator:
+        """Retrieve operator by given identifier.
+
+        Args:
+            id_: Operator ID
+
+        Returns:
+            Operator object
+        """
+        # Existing operator
+        # TODO
+        # return X
+
+        # New operator
+        cfg = self._network.operators[id_]
+        return _Operator(
+            **_OperatorSettings(cfg).settings\
+            .update({ "input_params": self._compile_input_params(cfg)})
+        )
+
+    def _compile_input_params(self, cfg: dict) -> dict:
+        """Compile dedicated and shared input parameters.
+
+        Args:
+            cfg: Operator config
+
+        Returns:
+            Dictionary of compiled input parameters
+        """
+        # Vars
+        input_params = {}
+
+        # Dedicated inputs
+        if "dedicated_input_params" in cfg:
+            input_params.update(cfg["dedicated_input_params"])
+
+        # Shared inputs: TODO change to list of tuples do allow more than one
+        if "shared_input_params" in cfg:
+            input_ = cfg["shared_input_params"]
+            if isinstance(input_, str):
+                if self._memory.shared.exists(input_):
+                    input_params[input_] = self._memory.shared.get(input_)
+                else:
+                    raise ImportError(f"{self._me} Shared input parameter "\
+                                      f"{input_} does not exist in memory.")
+
+            elif isinstance(input_, tuple):
+                if not self._memory.shared.exists(input_[0]):
+                    self._memory.shared.add(input_[0], input_[1])
+                    input_params[input_[0]] = self._memory.shared.get(input_[0])
+                else:
+                    raise ImportError(f"{self._me} Shared input parameter "\
+                                      f"{input_[0]} already exists in memory.")
+
+        return input_params
