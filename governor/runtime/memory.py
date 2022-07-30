@@ -78,6 +78,14 @@ class Memory():
             """Initialize shared memory."""
             self._data = {}
 
+        def exists(self, id_: str) -> bool:
+            """Boolean flag if identifier in memory.
+
+            Args:
+                id_: Unique identifier of data
+            """
+            return id_ in self._data
+
         def add(self, id_: str, data: any):
             """Add new data given its identifier.
 
@@ -121,15 +129,18 @@ class Memory():
             else:
                 return self._data[id_]
 
-        def update(self, id_: str, data: any):
+        def update(self, id_: str, data: any, create: bool = False):
             """Update existing data given its identifier.
 
             Args:
                 id_: Unique identifier of data
                 data: Any data structure
+                create: (Optional) Flag to create if id_ does not exist
             """
             if id_ in self._data:
                 self._data[id_][id_] = data
+            elif create:
+                self.add(id_, data)
 
         def remove(self, id_: str):
             """Remove existing data given its identifier.
