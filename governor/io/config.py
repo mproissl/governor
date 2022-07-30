@@ -151,7 +151,11 @@ class Config():
                              f"Only the following are supported: {keys}")
 
         # Header settings are of correct type
-        # TODO
+        if (not all(isinstance(self._config["header"][key],
+                               _config_header_parameters()[key]["dtype"])
+            for key in self._config["header"].keys())):
+            raise ValueError(f"{self._me} Header contains settings of "\
+                             f"incorrect type. Please review the docs.")
 
         # Payload key exists
         if "payload" not in self._config:
