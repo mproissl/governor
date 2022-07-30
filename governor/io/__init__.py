@@ -1,6 +1,6 @@
 """Governor I/O Module"""
 
 # Expose selection
-from .config import Config
+from .config import Config, ConfigWrapper
 
-__all__ = ['Config']
+__all__ = ['Config', 'ConfigWrapper']
