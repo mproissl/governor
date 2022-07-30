@@ -200,7 +200,12 @@ class Config():
                                  f"following are supported: {keys}")
 
             # Operator settings are of correct type
-            # TODO
+            if (not all(isinstance(operator_[key],
+                        _config_payload_operator_parameters()[key]["dtype"])
+                for key in operator_.keys())):
+                raise ValueError(f"{self._me} Operator at index {idx_} "\
+                                 f"contains settings of incorrect type. "\
+                                 f"Please review the docs.")
 
             # Operator run_after setting not at first
             # TODO
