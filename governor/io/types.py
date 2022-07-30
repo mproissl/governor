@@ -80,87 +80,144 @@ def config_header_parameters():
 def config_payload_operator_parameters():
     """Configuration operator parameters with descriptions."""
     return {
-        "id_":
-            "Globally unique identifier of operator. Default: "\
-            "automatically generated.",
+        "id_": {
+            "description": "Globally unique identifier of operator. Default: "\
+                           "automatically generated.",
+            "dtype": str,
+            "default": None
+        },
 
-        "name":
-            "Name of operator and thus Python method name to run.",
+        "name": {
+            "description": "Name of operator and thus Python method name to "\
+                           "run.",
+            "dtype": str,
+            "default": None
+        },
 
-        "label":
-            "Custom label attached to this operator, which may describe "\
-            "the operator better than the name.",
+        "label": {
+            "description": "Custom label attached to this operator, which "\
+                           "may describe the operator better than the name.",
+            "dtype": str,
+            "default": None
+        },
 
-        "module_path":
-            "Python path to operator module using dots convention.",
+        "module_path": {
+            "description": "Python path to operator module using dots "\
+                           "convention.",
+            "dtype": str,
+            "default": None
+        },
 
-        "class_name":
-            "Name of the class containing the operator method to run.",
+        "class_name": {
+            "description": "Name of the class containing the operator method "\
+                           "to run.",
+            "dtype": str,
+            "default": None
+        },
 
-        "class_params":
-            "Dictionary of parameter settings to pass to class "\
-            "containing the operator method using the keys for "\
-            "parameter names and respective values for parameter "\
-            "values.",
+        "class_params": {
+            "description": "Dictionary of parameter settings to pass to "\
+                           "class containing the operator method using the "\
+                           "keys for parameter names and respective values "\
+                           "for parameter values.",
+            "dtype": dict,
+            "default": None
+        },
 
-        "dedicated_input_params":
-            "Dictionary of dedicated parameter "\
-            "settings to pass to the operator method "\
-            "using the keys for parameter names and "\
-            "respective values for parameter values.",
+        "dedicated_input_params": {
+            "description": "Dictionary of dedicated parameter settings to "\
+                           "pass to the operator method using the keys for "\
+                           "parameter names and respective values for "\
+                           "parameter values.",
+            "dtype": dict,
+            "default": None
+        },
 
-        "shared_input_params":
-            "Either the name of an existing globally-"\
-            "shared object or new object of the tuple "\
-            "shape ('OBJECT_NAME', initial-value).",
+        "shared_input_params": {
+            "description": "Either the name of an existing globally-shared"\
+                           "object or new object of the tuple shape "\
+                           "('OBJECT_NAME', initial-value).",
+            "dtype": (str, tuple),
+            "default": None
+        },
 
-        "save_output":
-            "If the operator has a return value, this flag can "\
-            "be set to save the response. Default: False",
+        "save_output": {
+            "description": "If the operator has a return value, this flag "\
+                           "can be set to save the response. Default: False",
+            "dtype": bool,
+            "default": False
+        },
 
-        "shared_output_name":
-            "If save_output is set to True, the response "\
-            "can be shared with other operators given "\
-            "this globally-unique user-defined name.",
+        "shared_output_name": {
+            "description": "If save_output is set to True, the response can "\
+                           "be shared with other operators given this "\
+                           "globally-unique user-defined name. In case the "\
+                           "save_output is set to True, but no name is "\
+                           "given, then the operator id_ is used.",
+            "dtype": str,
+            "default": None
+        },
 
-        "run_after":
-            "Command to run this operator after completion of other "\
-            "operator(s) given one (String) or more (list) of id_ "\
-            "values assigned to the respective operators. If this "\
-            "parameter is not set, operators are executed in the "\
-            "order they appear in the configuration.",
+        "run_after": {
+            "description": "Command to run this operator after completion of "\
+                           "other operator(s) given one (String) or more "\
+                           "(list) of id_ values assigned to the respective "\
+                           "operators. If this parameter is not set, "\
+                           "operators are executed in the order they appear "\
+                           "in the configuration.",
+            "dtype": (str, list),
+            "default": None
+        },
+#
+#        "run_after_parallel":
+#            "Boolean flag to allow parallel execution of "\
+#            "this operator if more than one run_after "\
+#            "id_ has been set. Default: False",
 
-        "run_after_parallel":
-            "Boolean flag to allow parallel execution of "\
-            "this operator if more than one run_after "\
-            "id_ has been set. Default: False",
+        "group": {
+            "description": "User-defined group name which adds this operator "\
+                           "to a group of other operators, which belong "\
+                           "together and can be referenced as one larger "\
+                           "operator.",
+            "dtype": str,
+            "default": None
+        },
 
-        "group":
-            "User-defined group name which adds this operator to a "\
-            "group of other operators, which belong together and "\
-            "can be referenced as one larger operator.",
+        "repeat": {
+            "description": "Number of times to run this operator. Default: 1",
+            "dtype": int,
+            "default": 1
+        },
 
-        "repeat":
-            "Number of times to run this operator. Default: 1",
+        "dedicated_input_variations": {
+            "description": "Dictionary of input parameter variations with "\
+                           "the name of the parameter as key and a "\
+                           "dictionary as value with either 'from', 'to', "\
+                           "'step_size' for numerical settings or 'list' for "\
+                           "a list of any values.",
+            "dtype": dict,
+            "default": None
+        },
 
-        "dedicated_input_variations":
-            "Dictionary of input parameter variations with the name of the "\
-            "parameter as key and a dictionary as value with either 'from', "\
-            "'to', 'step_size' for numerical settings or 'list' for a list "\
-            "of any values.",
+        "run_synchronized_input_variations:": {
+            "description": "Boolean flag to indicate if parameter values "\
+                           "specified in 'dedicated_input_variations' shall "\
+                           "be varied all at once, which requires that the "\
+                           "length must be equal over all variation "\
+                           "instructions, or one parameter is varied at a "\
+                           "time and thus all permutations are being run. "\
+                           "Default: False",
+            "dtype": bool,
+            "default": False
+        },
 
-        "run_synchronized_input_variations:":
-            "Boolean flag to indicate if parameter values specified in "\
-            "'dedicated_input_variations' shall be varied all at once, "\
-            "which requires that the length must be equal over all variation "\
-            "instructions, or one parameter is varied at a time and thus all "\
-            "permutations are being run. Default: False",
-
-        "run_group_level_variations":
-            "Boolean flag to run variations specified in "\
-            "'dedicated_input_variations' after running all other operators "\
-            "in the 'group'. Default: False"
-
+        "run_group_level_variations": {
+            "description": "Boolean flag to run variations specified in "\
+                           "'dedicated_input_variations' after running all "\
+                           "other operators in the 'group'. Default: False",
+            "dtype": bool,
+            "default": False
+        }
     }
 
 
