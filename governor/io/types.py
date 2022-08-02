@@ -257,3 +257,21 @@ def config_payload_variation_options():
                 "list": list
             }
     }
+
+
+def get_config_values(method_name: str, attribute_name: str):
+    """Extract value from config and provide as dictionary.""""
+    
+    # Vars
+    extract = {}
+    supported = [
+        "config_header_parameters()",
+        "config_payload_operator_parameters()",
+    ]
+    config = eval(method_name) if method_name in supported else None
+    
+    # Extract
+    if config is not None:
+        for key in config:
+            extract[key] = config[key][attribute_name]
+    return extract
