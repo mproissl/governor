@@ -301,3 +301,28 @@ class ConfigWrapper():
         if "enable_multiprocessing" in self.header:
             return self.header["enable_multiprocessing"]
         return _config_header_parameters()["enable_multiprocessing"]["default"]
+
+
+class ConfigReader():
+    """Reader of Dictionary in Configuration."""
+
+    def __init__(self, config: dict, defaults: dict = None):
+        """Initialize a new configuration reader.
+
+        Args:
+            config: Any configuration in dictionary form
+            defaults: (Optional) Dictionary of default values
+        """
+        for key in config:
+            setattr(self, key, config[key])
+        for key in defaults:
+            if key not in config:
+                setattr(self, key, defaults[key])
+
+    def exists(self, attribute: str):
+        """Check if class contains attribute of given name."""
+        try:
+            _ = getattr(self, attribute)
+        except AttributeError:
+            return False
+        return True
