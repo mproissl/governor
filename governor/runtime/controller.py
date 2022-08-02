@@ -26,8 +26,11 @@ from typing import Union as _Union
 from secrets import token_urlsafe as _token_urlsafe
 
 # Local Dependencies
-from governor.io import Config as _Config, ConfigWrapper as _ConfigWrapper
+from governor.io import Config as _Config
+from governor.io import ConfigWrapper as _ConfigWrapper
+from governor.io import ConfigReader as _ConfigReader
 from governor.io.types import ConfigType as _ConfigType
+from governor.io.types import get_config_values as _get_config_values
 from governor.objects.network import Network as _Network
 from governor.objects.operator import Operator as _Operator, OperatorSettings as _OperatorSettings
 from governor.runtime.memory import Memory as _Memory
@@ -54,6 +57,11 @@ class Controller():
         self._memory = _Memory()
         self._parallelize = False
         self._executed = []
+        
+        # Helper
+        self._operator_defaults = _get_config_values(
+            "config_payload_operator_parameters()",
+            "default")
 
         # Load config
         self._load_configuration(config)
@@ -146,24 +154,22 @@ class Controller():
         for id_ in self._network.operator_sequence():
 
             # Config
-            cfg = self._network.operators[id_]
+            cfg = _ConfigReader(config = self._network.operators[id_],
+                                defaults = self._operator_defaults)
 
             # Repeat
-            runs = 1
-            if "repeat" in cfg:
-                runs = cfg["repeat"]
+            runs = cfg.repeat
 
             # Variations
             # TODO
 
             # Save
             save = None
-            if "save_output" in cfg:
-                if cfg["save_output"]:
-                    if "shared_output_name" in cfg:
-                        save = cfg["shared_output_name"]
-                    else:
-                        save = id_
+            if cfg.save_output:
+                if cfg.shared_output_name is not None:
+                    save = cfg.shared_output_name
+                else:
+                    save = id_
 
             # Operator
             operator = self._get_operator(id_)
