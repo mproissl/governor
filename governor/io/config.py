@@ -321,7 +321,14 @@ class ConfigReader():
                     setattr(self, key, defaults[key])
 
     def exists(self, attribute: str) -> bool:
-        """Check if class contains attribute of given name."""
+        """Check if class contains attribute of given name.
+
+        Args:
+            attribute: Name of attribute
+
+        Returns:
+            Boolean flag
+        """
         return hasattr(self, attribute)
         #try:
         #    _ = getattr(self, attribute)
