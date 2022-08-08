@@ -6,7 +6,7 @@ header:
   description: This is a simple test configuration script.
 
   # Global settings
-  enable_multiprocessing: True
+  enable_multiprocessing: False
 
 # PAYLOAD
 payload:
@@ -14,44 +14,33 @@ payload:
   # Defintion of operators to run
   operators:
     
-    # Example operator without parameters
     - id_: A
-      name: method_no_params
-      module_path: test_modules.scripts
+      name: operator_no_params_no_shared_no_return
+      module_path: test_modules.operators
     
-    # Example operator with parameters
     - id_: B
-      name: method_with_params
-      module_path: test_modules.scripts
+      name: operator_no_shared_no_return
+      module_path: test_modules.operators
       dedicated_input_params:
-        param1: "p1"
-        param2: 2
+        value_str: "my_str_1"
+        value_int: 1
       run_after: A
     
-    # Example operator with parameters within class
     - id_: C
-      name: method_with_params_in_class
-      module_path: test_modules.scripts
-      class_name: MyClass
+      name: operator_no_return
+      module_path: test_modules.operators
       dedicated_input_params:
-        param1: "p1"
-        param2: 2
+        value_str: "my_str_2"
+      shared_input_params: ("shared_param_1", 2)4
       run_after: B
-
+    
     - id_: D
-      name: method_no_params
-      module_path: test_modules.scripts
-      run_after: B
-    
-    - id_: E
-      name: method_no_params
-      module_path: test_modules.scripts
-      run_after: B
-    
-    - id_: F
-      name: method_no_params
-      module_path: test_modules.scripts
-      run_after: B
+      name: operator_no_return
+      module_path: test_modules.operators
+      dedicated_input_params:
+        value_str: "my_str_2"
+      shared_input_params: ("shared_param_2", 3)
+      run_after: C
   
   # Definition of variations to run
   variations:
