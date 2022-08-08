@@ -68,8 +68,6 @@ class OperatorSettings():
         for key in vars(config):
             if key in self._optional:
                 self._settings[key] = config.get(key)
-            else:
-                raise ValueError(f"{self._me} Unknown setting: {key}")
 
     @property
     def settings(self) -> dict:
@@ -185,7 +183,7 @@ class Operator():
 
             # Re-raise
             raise ImportError(f"{self._me} Failed loading operator"\
-                               " '{self._operator_ref}'.") from err
+                              f" '{self._operator_ref}'.") from err
 
     @property
     def id(self) -> str:
@@ -262,7 +260,7 @@ class Operator():
 
             # Re-raise
             raise RuntimeError(f"{self._me} Failed running operator"\
-                                       " '{self._operator_ref}'.") from err
+                               f" '{self._operator_ref}'.") from err
 
     def _run_init(self):
         """Update setting before running operator."""
