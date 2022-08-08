@@ -1,0 +1,84 @@
+# HEADER
+header:
+  
+  # General
+  name: Governor Test Configuration
+  description: This is a simple test configuration script.
+
+  # Global settings
+  enable_multiprocessing: False
+
+# PAYLOAD
+payload:
+  
+  # Defintion of operators to run
+  operators:
+    
+    - name: operator_no_params_no_shared_no_return
+      module_path: test_modules.operators.native_based
+    
+    - name: operator_no_shared_no_return
+      module_path: test_modules.operators.native_based
+      dedicated_input_params:
+        value_str: "my_str_1"
+        value_int: 1
+    
+    - name: operator_no_return
+      module_path: test_modules.operators.native_based
+      dedicated_input_params:
+        value_str: "my_str_2"
+      shared_input_params:
+        shared_param_1: "my_str_2_shared"
+    
+    - name: operator
+      module_path: test_modules.operators.native_based
+      dedicated_input_params:
+        value_str: "my_str_3"
+      shared_input_params:
+        shared_param_2: "my_str_3_shared"
+    
+    - name: operator_no_return
+      module_path: test_modules.operators.native_based
+      dedicated_input_params:
+        value_str: "my_str_4"
+      shared_input_params: "shared_param_1"
+    
+    - name: operator_multi_share
+      module_path: test_modules.operators.native_based
+      dedicated_input_params:
+        value_str: "my_str_5"
+      shared_input_params:
+        - "shared_param_1"
+        - "shared_param_2"
+    
+    - name: operator_add_to_shared
+      module_path: test_modules.operators.native_based
+      dedicated_input_params:
+        value_to_add: 1
+      shared_input_params:
+        shared_param_3: 0
+      save_output: True
+      shared_output_name: "shared_param_3"
+    
+    - name: operator_add_to_shared
+      module_path: test_modules.operators.native_based
+      dedicated_input_params:
+        value_to_add: 1
+      shared_input_params: "shared_param_3"
+      save_output: True
+      shared_output_name: "shared_param_3"
+    
+    - name: operator_add_to_shared
+      module_path: test_modules.operators.native_based
+      dedicated_input_params:
+        value_to_add: 1
+      shared_input_params: "shared_param_3"
+      save_output: True
+      shared_output_name: "shared_param_3"
+      repeat: 3
+      reinitialize_in_repeats: True
+  
+  # Definition of variations to run
+  variations:
+
+    repeat_groups: 1
