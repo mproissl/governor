@@ -23,7 +23,6 @@
 
 # Dependencies
 from enum import Enum as _Enum, unique as _unique
-from ast import literal_eval as _eval
 
 
 @_unique
@@ -200,6 +199,13 @@ def config_payload_operator_parameters():
             "default": 1
         },
 
+        "reinitialize_in_repeats": {
+            "description": "Flag to reinitialize operator in repetitive use. "\
+                           "Default: True",
+            "dtype": bool,
+            "default": True
+        },
+
         "dedicated_input_variations": {
             "description": "Dictionary of input parameter variations with "\
                            "the name of the parameter as key and a "\
@@ -282,7 +288,9 @@ def get_config_values(method_name: str, attribute_name: str):
 
     # Evaluate
     try:
-        config = _eval(method_name) if method_name in supported else None
+        # pylint: disable=eval-used
+        config = eval(method_name) if method_name in supported else None
+        # pylint: enable=eval-used
     except (ValueError, TypeError, SyntaxError, MemoryError, RecursionError):
         config = None
         pass
