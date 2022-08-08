@@ -26,6 +26,7 @@ from secrets import token_urlsafe as _token_urlsafe
 
 # Local Dependencies
 from governor.io import ConfigWrapper as _ConfigWrapper
+from governor.io import ConfigReader as _ConfigReader
 
 
 class Network():
@@ -103,7 +104,7 @@ class Network():
         ids_ = []
         for cfg in config_:
             ids_.append(self._operator_id(cfg))
-            self._operators[ids_[-1]] = cfg
+            self._operators[ids_[-1]] = _ConfigReader(cfg)
 
         # Initialize network edges with run_after blindness
         for idx_, id_ in enumerate(ids_):
@@ -136,11 +137,11 @@ class Network():
                 target_cfg = self._operators[edge.target]
 
                 # Skip without run_after
-                if not self._has_run_after(target_cfg):
+                if not target_cfg.exists("run_after"):
                     continue
 
                 # Expected source of target operator
-                expected_source_ = target_cfg["run_after"]
+                expected_source_ = target_cfg.run_after
 
                 # Single instruction
                 if isinstance(expected_source_, str):
@@ -217,37 +218,26 @@ class Network():
                         self._edges[update_edge].source = \
                             self._edges[update_edge-1].target
 
-    def _operator_id(self, operator_: dict) -> str:
+    def _operator_id(self, operator_config: _ConfigReader) -> str:
         """Return unique identifier of operator.
 
         Args:
-            operator_: Configuration of operator
+            operator_reader: Operator configuration reader
 
         Returns:
             Unique id string
         """
-        if self._has_user_id(operator_):
-            if operator_["id_"] not in self._operators:
-                return operator_["id_"]
+        if operator_config.exists("id_"):
+            if operator_config.id_ not in self._operators:
+                return operator_config.id_
             else:
                 # Sanity (bug) check: should be discovered already during
                 # config import validation
                 raise ValueError(f"{self._me} Duplicate user-defined "\
                                  f"operator identifier found: "\
-                                 f"{operator_['id_']}")
+                                 f"{operator_config.id_}")
         else:
             return self._create_id()
-
-    def _has_user_id(self, operator_: dict):
-        """Flag if operator has user-defined identifier.
-
-        Args:
-            operator_: Operator settings dictionary
-
-        Returns:
-            Boolean flag
-        """
-        return "id_" in operator_
 
     def _create_id(self, length: int = 16) -> str:
         """Create random unique id.
@@ -263,17 +253,6 @@ class Network():
             self._create_id(length)
 
         return id_
-
-    def _has_run_after(self, operator_: dict) -> bool:
-        """Flag if operator has run_after instruction.
-
-        Args:
-            operator_: Operator settings dictionary
-
-        Returns:
-            Boolean flag
-        """
-        return "run_after" in operator_
 
     class _Link():
         """Named network links."""
