@@ -1,0 +1,23 @@
+# HEADER
+header:
+  
+  # General
+  name: Governor Test Configuration
+  description: This is a simple test configuration script.
+
+  # Global settings
+  enable_multiprocessing: False
+
+# PAYLOAD
+payload:
+  
+  # Defintion of operators to run
+  operators:
+    
+    - name: operator_no_params_no_shared_no_return
+      module_path: test_modules.operators.native_based
+  
+  # Definition of variations to run
+  variations:
+
+    repeat_groups: 1
