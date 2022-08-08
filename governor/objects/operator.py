@@ -27,16 +27,17 @@ from timeit import default_timer as _timer
 
 # Local Dependencies
 from governor.objects.types import OperatorState as _OperatorState
+from governor.io.config import ConfigReader as _ConfigReader
 
 
 class OperatorSettings():
     """Settings Helper for Operator() class initialization."""
 
-    def __init__(self, config: dict):
+    def __init__(self, config: _ConfigReader):
         """Initialize new operator settings.
 
         Args:
-            config: Operator configuration dictionary
+            config: Operator configuration reader
         """
 
         # Private vars
@@ -58,15 +59,15 @@ class OperatorSettings():
 
         # Required settings
         for key in self._required:
-            if key not in config:
+            if not config.exists(key):
                 raise ValueError(f"{self._me} Missing required setting: {key}")
             else:
-                self._settings[key] = config[key]
+                self._settings[key] = config.get(key)
 
         # Optional settings
-        for key in config:
+        for key in vars(config):
             if key in self._optional:
-                self._settings[key] = config[key]
+                self._settings[key] = config.get(key)
             else:
                 raise ValueError(f"{self._me} Unknown setting: {key}")
 
