@@ -23,6 +23,7 @@
 
 # Dependencies
 from enum import Enum as _Enum, unique as _unique
+from ast import literal_eval as _eval
 
 
 @_unique
@@ -260,16 +261,22 @@ def config_payload_variation_options():
 
 
 def get_config_values(method_name: str, attribute_name: str):
-    """Extract value from config and provide as dictionary.""""
-    
+    """Extract value from config and provide as dictionary."""
+
     # Vars
     extract = {}
     supported = [
         "config_header_parameters()",
         "config_payload_operator_parameters()",
     ]
-    config = eval(method_name) if method_name in supported else None
-    
+
+    # Evaluate
+    try:
+        config = _eval(method_name) if method_name in supported else None
+    except (ValueError, TypeError, SyntaxError, MemoryError, RecursionError):
+        config = None
+        pass
+
     # Extract
     if config is not None:
         for key in config:
