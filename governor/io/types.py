@@ -136,10 +136,20 @@ def config_payload_operator_parameters():
 
         "shared_input_params": {
             "description": "Either the name of an existing globally-shared"\
-                           "object or new object of the tuple shape "\
-                           "('OBJECT_NAME', initial-value).",
-            "dtype": (str, tuple),
+                           "object, a list of these names if more than one "\
+                           "or a set of new objects in dictionary format: "\
+                           "'OBJECT_NAME': initial-value.",
+            "dtype": (str, list, dict),
             "default": None
+        },
+
+        "shared_input_init_only": {
+            "description": "If shared_input_params are given for "\
+                           "initialization, i.e. in form of a dictionary, "\
+                           "this flag can be set to only allow this "\
+                           "operator for one-time use. Default: False",
+            "dtype": bool,
+            "default": False
         },
 
         "save_output": {
