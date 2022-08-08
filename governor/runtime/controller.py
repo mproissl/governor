@@ -40,7 +40,7 @@ class Controller():
 
     def __init__(self,
                  # Required inputs
-                 config: _Union(_Config, str, dict),
+                 config: _Union[_Config, str, dict],
                 ):
         """Initialize a new controller.
 
@@ -206,11 +206,11 @@ class Controller():
             .update({ "input_params": self._compile_input_params(cfg)})
         )
 
-    def _compile_input_params(self, cfg: dict) -> dict:
+    def _compile_input_params(self, cfg: _ConfigReader) -> dict:
         """Compile dedicated and shared input parameters.
 
         Args:
-            cfg: Operator config
+            cfg: Operator configuration reader
 
         Returns:
             Dictionary of compiled input parameters
@@ -219,25 +219,49 @@ class Controller():
         input_params = {}
 
         # Dedicated inputs
-        if "dedicated_input_params" in cfg:
-            input_params.update(cfg["dedicated_input_params"])
+        if cfg.exists("dedicated_input_params"):
+            input_params.update(cfg.dedicated_input_params)
 
-        # Shared inputs: TODO change to list of tuples do allow more than one
-        if "shared_input_params" in cfg:
-            input_ = cfg["shared_input_params"]
+        # Shared inputs
+        if cfg.exists("shared_input_params"):
+            input_ = cfg.shared_input_params
             if isinstance(input_, str):
                 if self._memory.shared.exists(input_):
                     input_params[input_] = self._memory.shared.get(input_)
                 else:
-                    raise ImportError(f"{self._me} Shared input parameter "\
+                    raise MemoryError(f"{self._me} Shared input parameter "\
                                       f"{input_} does not exist in memory.")
 
-            elif isinstance(input_, tuple):
-                if not self._memory.shared.exists(input_[0]):
-                    self._memory.shared.add(input_[0], input_[1])
-                    input_params[input_[0]] = self._memory.shared.get(input_[0])
-                else:
-                    raise ImportError(f"{self._me} Shared input parameter "\
-                                      f"{input_[0]} already exists in memory.")
+            elif isinstance(input_, list):
+                for name_ in input_:
+                    if isinstance(name_, str):
+                        if self._memory.shared.exists(name_):
+                            input_params[name_] = self._memory.shared.get(name_)
+                        else:
+                            raise MemoryError(
+                                f"{self._me} Shared input parameter "\
+                                f"{name_} does not exist in memory.")
+                    else:
+                        raise ValueError(
+                                f"{self._me} Shared input parameter "\
+                                f"{name_} is not a String.")
+
+            elif isinstance(input_, dict):
+                for name_ in input_:
+                    if isinstance(name_, str):
+                        if not self._memory.shared.exists(name_):
+                            self._memory.shared.add(name_, input_[name_])
+                            input_params[name_] = self._memory.shared.get(name_)
+                        else:
+                            input_params[name_] = self._memory.shared.get(name_)
+                            if cfg.exists("shared_input_init_only"):
+                                if cfg.shared_input_init_only:
+                                    raise ValueError(
+                                        f"{self._me} Shared input parameter "\
+                                        f"{name_} already exists in memory.")
+                    else:
+                        raise ValueError(
+                                f"{self._me} Shared input parameter "\
+                                f"{name_} is not a String.")
 
         return input_params
