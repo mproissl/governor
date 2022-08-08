@@ -319,10 +319,15 @@ class ConfigReader():
             if key not in config:
                 setattr(self, key, defaults[key])
 
-    def exists(self, attribute: str):
+    def exists(self, attribute: str) -> bool:
         """Check if class contains attribute of given name."""
-        try:
-            _ = getattr(self, attribute)
-        except AttributeError:
-            return False
-        return True
+        return hasattr(self, attribute)
+        #try:
+        #    _ = getattr(self, attribute)
+        #except AttributeError:
+        #    return False
+        #return True
+
+    def get(self, attribute: str) -> any:
+        """Return attribute value by given name."""
+        return getattr(self, attribute)
