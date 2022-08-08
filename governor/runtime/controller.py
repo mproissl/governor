@@ -30,7 +30,6 @@ from governor.io import Config as _Config
 from governor.io import ConfigWrapper as _ConfigWrapper
 from governor.io import ConfigReader as _ConfigReader
 from governor.io.types import ConfigType as _ConfigType
-from governor.io.types import get_config_values as _get_config_values
 from governor.objects.network import Network as _Network
 from governor.objects.operator import Operator as _Operator, OperatorSettings as _OperatorSettings
 from governor.runtime.memory import Memory as _Memory
@@ -57,11 +56,6 @@ class Controller():
         self._memory = _Memory()
         self._parallelize = False
         self._executed = []
-
-        # Helper
-        self._operator_defaults = _get_config_values(
-            "config_payload_operator_parameters()",
-            "default")
 
         # Load config
         self._load_configuration(config)
@@ -154,8 +148,7 @@ class Controller():
         for id_ in self._network.operator_sequence():
 
             # Config
-            cfg = _ConfigReader(config = self._network.operators[id_],
-                                defaults = self._operator_defaults)
+            cfg = self._network.operators[id_]
 
             # Repeat
             runs = cfg.repeat
@@ -172,14 +165,21 @@ class Controller():
                     save = id_
 
             # Operator
-            operator = self._get_operator(id_)
+            if not cfg.reinitialize_in_repeats:
+                operator = self._get_operator(id_)
 
             # Run
             while runs > 0:
+
+                # (Re)Init
+                if cfg.reinitialize_in_repeats:
+                    operator = self._get_operator(id_)
+
+                # Execute
                 if save is None:
                     _ = operator.run().response
                 else:
-                    self._memory.shared.update(id_, operator.run().response,\
+                    self._memory.shared.update(save, operator.run().response,\
                                                create=True)
 
                 # Log
@@ -201,10 +201,25 @@ class Controller():
 
         # New operator
         cfg = self._network.operators[id_]
-        return _Operator(
-            **_OperatorSettings(cfg).settings\
-            .update({ "input_params": self._compile_input_params(cfg)})
-        )
+        return _Operator(**self._operator_settings(cfg))
+
+    def _operator_settings(self, cfg: _ConfigReader) -> dict:
+        """Compile settings for operator.
+
+        Args:
+            cfg: Operator configuration reader
+
+        Returns:
+            Dictionary of compiled operator settings
+        """
+        # Direct settings
+        settings = _OperatorSettings(cfg).settings
+
+        # Extensions (direct pass -> double exec)
+        if self._compile_input_params(cfg):
+            settings.update({ "input_params": self._compile_input_params(cfg)})
+
+        return settings
 
     def _compile_input_params(self, cfg: _ConfigReader) -> dict:
         """Compile dedicated and shared input parameters.
@@ -220,7 +235,8 @@ class Controller():
 
         # Dedicated inputs
         if cfg.exists("dedicated_input_params"):
-            input_params.update(cfg.dedicated_input_params)
+            if cfg.dedicated_input_params is not None:
+                input_params.update(cfg.dedicated_input_params)
 
         # Shared inputs
         if cfg.exists("shared_input_params"):
