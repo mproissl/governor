@@ -27,6 +27,7 @@ from secrets import token_urlsafe as _token_urlsafe
 # Local Dependencies
 from governor.io import ConfigWrapper as _ConfigWrapper
 from governor.io import ConfigReader as _ConfigReader
+from governor.io.types import get_config_values as _get_config_values
 
 
 class Network():
@@ -57,6 +58,11 @@ class Network():
         self._me = "Network():"
         self._operators = {}
         self._edges = []
+
+        # Prepare default values
+        self._operator_defaults = _get_config_values(
+            "config_payload_operator_parameters()",
+            "default")
 
         # Build network
         self._build(config.operators)
@@ -91,6 +97,9 @@ class Network():
             else:
                 sequence_.append(edge.target)
 
+        # Consider special case
+        if (len(sequence_) == 0 and len(self._operators) == 1):
+            sequence_.append(next(iter(self._operators)))
         return sequence_
 
     def _build(self, config_: list):
@@ -104,7 +113,10 @@ class Network():
         ids_ = []
         for cfg in config_:
             ids_.append(self._operator_id(cfg))
-            self._operators[ids_[-1]] = _ConfigReader(cfg)
+            self._operators[ids_[-1]] = _ConfigReader(
+                config = cfg,
+                defaults = self._operator_defaults
+            )
 
         # Initialize network edges with run_after blindness
         for idx_, id_ in enumerate(ids_):
