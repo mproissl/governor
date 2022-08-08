@@ -218,24 +218,24 @@ class Network():
                         self._edges[update_edge].source = \
                             self._edges[update_edge-1].target
 
-    def _operator_id(self, operator_config: _ConfigReader) -> str:
+    def _operator_id(self, operator_config: dict) -> str:
         """Return unique identifier of operator.
 
         Args:
-            operator_reader: Operator configuration reader
+            operator_config: Operator configuration dictionary
 
         Returns:
             Unique id string
         """
-        if operator_config.exists("id_"):
-            if operator_config.id_ not in self._operators:
-                return operator_config.id_
+        if "id_" in operator_config:
+            if operator_config["id_"] not in self._operators:
+                return operator_config["id_"]
             else:
                 # Sanity (bug) check: should be discovered already during
                 # config import validation
                 raise ValueError(f"{self._me} Duplicate user-defined "\
                                  f"operator identifier found: "\
-                                 f"{operator_config.id_}")
+                                 f"{operator_config['id_']}")
         else:
             return self._create_id()
 
