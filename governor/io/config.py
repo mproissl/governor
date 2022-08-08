@@ -315,9 +315,10 @@ class ConfigReader():
         """
         for key in config:
             setattr(self, key, config[key])
-        for key in defaults:
-            if key not in config:
-                setattr(self, key, defaults[key])
+        if defaults is not None:
+            for key in defaults:
+                if key not in config:
+                    setattr(self, key, defaults[key])
 
     def exists(self, attribute: str) -> bool:
         """Check if class contains attribute of given name."""
