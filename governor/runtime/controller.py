@@ -57,7 +57,7 @@ class Controller():
         self._memory = _Memory()
         self._parallelize = False
         self._executed = []
-        
+
         # Helper
         self._operator_defaults = _get_config_values(
             "config_payload_operator_parameters()",
