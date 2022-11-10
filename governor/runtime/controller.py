@@ -31,8 +31,12 @@ from governor.io import ConfigWrapper as _ConfigWrapper
 from governor.io import ConfigReader as _ConfigReader
 from governor.io.types import ConfigType as _ConfigType
 from governor.objects.network import Network as _Network
-from governor.objects.operator import Operator as _Operator, OperatorSettings as _OperatorSettings
+from governor.objects.operator import Operator as _Operator
+from governor.objects.operator import OperatorSettings as _OperatorSettings
 from governor.runtime.memory import Memory as _Memory
+from governor.utils.helpers import string_splitter as _string_splitter
+from governor.utils.helpers import strings_contain_whitespace as _strings_contain_whitespace
+
 
 class Controller():
     """Controller of a network of operators."""
@@ -216,12 +220,14 @@ class Controller():
         settings = _OperatorSettings(cfg).settings
 
         # Extensions (direct pass -> double exec)
-        if self._compile_input_params(cfg):
-            settings.update({ "input_params": self._compile_input_params(cfg)})
+        if self._compile_operator_input_params(cfg):
+            settings.update({
+                "input_params": self._compile_operator_input_params(cfg)
+            })
 
         return settings
 
-    def _compile_input_params(self, cfg: _ConfigReader) -> dict:
+    def _compile_operator_input_params(self, cfg: _ConfigReader) -> dict:
         """Compile dedicated and shared input parameters.
 
         Args:
@@ -242,21 +248,27 @@ class Controller():
         if cfg.exists("shared_input_params"):
             input_ = cfg.shared_input_params
             if isinstance(input_, str):
-                if self._memory.shared.exists(input_):
-                    input_params[input_] = self._memory.shared.get(input_)
+                param_source, param_as = self._get_shared_parameter_as(input_)
+                if self._memory.shared.exists(param_source):
+                    input_params[param_as] =\
+                        self._memory.shared.get(param_source)
                 else:
                     raise MemoryError(f"{self._me} Shared input parameter "\
-                                      f"{input_} does not exist in memory.")
+                                      f"{param_source} does not exist in "\
+                                      f"memory.")
 
             elif isinstance(input_, list):
                 for name_ in input_:
                     if isinstance(name_, str):
-                        if self._memory.shared.exists(name_):
-                            input_params[name_] = self._memory.shared.get(name_)
+                        param_source, param_as =\
+                            self._get_shared_parameter_as(name_)
+                        if self._memory.shared.exists(param_source):
+                            input_params[param_as] =\
+                                self._memory.shared.get(param_source)
                         else:
                             raise MemoryError(
                                 f"{self._me} Shared input parameter "\
-                                f"{name_} does not exist in memory.")
+                                f"{param_source} does not exist in memory.")
                     else:
                         raise ValueError(
                                 f"{self._me} Shared input parameter "\
@@ -269,10 +281,19 @@ class Controller():
                             self._memory.shared.add(name_, input_[name_])
                             input_params[name_] = self._memory.shared.get(name_)
                         else:
+                            # Type sanity check
+                            if not isinstance(self._memory.shared.get(name_),\
+                                              type(input_[name_])):
+                                raise ValueError(
+                                    f"{self._me} Shared input parameter "\
+                                    f"{name_} in memory is of unequal "\
+                                    f"type to operator setting.")
+
+                            # Process
                             input_params[name_] = self._memory.shared.get(name_)
                             if cfg.exists("shared_input_init_only"):
                                 if cfg.shared_input_init_only:
-                                    raise ValueError(
+                                    raise MemoryError(
                                         f"{self._me} Shared input parameter "\
                                         f"{name_} already exists in memory.")
                     else:
@@ -281,3 +302,34 @@ class Controller():
                                 f"{name_} is not a String.")
 
         return input_params
+
+    def _get_shared_parameter_as(self, parameter_instruction: str) -> tuple:
+        """Extract parameter-as command instruction and return as pair.
+
+        Args:
+            parameter_instruction: Parameter string with or
+                                   without AS instruction
+
+        Returns:
+            Tuple with (primary-string, primary-as-string)
+        """
+        # Extract AS instruction
+        as_ = _string_splitter(string_object=parameter_instruction,
+                               delimiter=" as ")
+
+        # Return
+        if as_ is None:
+            return parameter_instruction, parameter_instruction
+        elif (isinstance(as_, list) and len(as_) == 2):
+            try:
+                as_, whitespace = _strings_contain_whitespace(*as_)
+                if not whitespace:
+                    return as_[0], as_[1]
+            # pylint: disable=broad-except
+            except Exception:
+                pass
+            # pylint: enable=broad-except
+
+        # Exception
+        raise ValueError(f"{self._me} Shared input parameter "\
+                         f"{parameter_instruction} has invalid format.")
