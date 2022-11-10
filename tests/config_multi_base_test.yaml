@@ -8,6 +8,10 @@ header:
   # Global settings
   enable_multiprocessing: False
 
+  # Shared data
+  shared_data:
+    shared_param_4: "my_str_4_shared_global"
+
 # PAYLOAD
 payload:
   
@@ -77,6 +81,12 @@ payload:
       shared_output_name: "shared_param_3"
       repeat: 3
       reinitialize_in_repeats: True
+    
+    - name: operator_no_return
+      module_path: test_modules.operators.native_based
+      dedicated_input_params:
+        value_str: "my_str_6"
+      shared_input_params: "shared_param_4 as shared_param_1"
   
   # Definition of variations to run
   variations:
