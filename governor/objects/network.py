@@ -118,6 +118,14 @@ class Network():
                 defaults = self._operator_defaults
             )
 
+        # Add null operator
+        if "__null__" not in self._operators:
+            ids_.insert(0, "__null__")
+            self._operators["__null__"] = None
+        else:
+            raise ImportError(f"{self._me} Protected identifier "\
+                              f"for null operator used: __null__ ")
+
         # Initialize network edges with run_after blindness
         for idx_, id_ in enumerate(ids_):
 
