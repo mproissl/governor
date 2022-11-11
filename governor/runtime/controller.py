@@ -153,6 +153,8 @@ class Controller():
 
             # Config
             cfg = self._network.operators[id_]
+            if cfg is None:
+                continue
 
             # Repeat
             runs = cfg.repeat
