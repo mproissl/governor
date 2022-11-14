@@ -102,6 +102,46 @@ class Network():
             sequence_.append(next(iter(self._operators)))
         return sequence_
 
+    def operator_tree(self) -> dict:
+        """Tree of operators.
+
+        Returns:
+            Dictionary of operator identifiers
+        """
+
+        # Init operator tree
+        tree_ = {}
+        print(self.edges_str)
+
+        # Single operator case
+        if len(self._operators) == 1:
+            tmp = next(iter(self._operators))
+            tree_[tmp] = None
+
+        # Multi operator case
+        else:
+
+            # Build tree with node structure
+            for idx, edge in enumerate(self._edges):
+
+                # Skip
+                if edge.source in tree_:
+                    continue
+
+                # Collect targets for fellow sources
+                targets_ = []
+                remove_ = []
+                for idx_ in range(idx, len(self._edges)):
+                    edge_ = self._edges[idx_]
+                    if (edge.source == edge_.source and idx_ not in remove_):
+                        targets_.append(edge_.target)
+                        remove_.append(idx_)
+
+                # Add
+                tree_[edge.source] = targets_
+
+        return tree_
+
     def _build(self, config_: list):
         """Build network structure based on configuration.
 
