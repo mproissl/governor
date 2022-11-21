@@ -1,0 +1,67 @@
+# HEADER
+header:
+  
+  # General
+  name: Governor Multiprocessing Test Configuration
+  description: This is a simple test configuration script.
+
+  # Global settings
+  enable_multiprocessing: True
+
+  # Shared data
+  shared_data:
+    process_time_sec: 10
+
+# PAYLOAD
+payload:
+  
+  # Defintion of operators to run
+  operators:
+    
+    - id_: "branch-1.1"
+      name: operator_task
+      module_path: test_modules.operators.native_multiproc_based
+      dedicated_input_params:
+        iterations: 10
+      shared_input_params: "process_time_sec"
+    
+    - id_: "branch-1.2"
+      run_after: "branch-1.1"
+      name: operator_post
+      module_path: test_modules.operators.native_multiproc_based
+      dedicated_input_params:
+        msg: "b1 post level 1"
+    
+    - id_: "branch-1.3"
+      run_after: "branch-1.2"
+      name: operator_post
+      module_path: test_modules.operators.native_multiproc_based
+      dedicated_input_params:
+        msg: "b1 post level 2"
+    
+    - id_: "branch-2.1"
+      run_after: "__null__"
+      name: operator_task
+      module_path: test_modules.operators.native_multiproc_based
+      dedicated_input_params:
+        iterations: 20
+      shared_input_params: "process_time_sec"
+    
+    - id_: "branch-2.2"
+      run_after: "branch-2.1"
+      name: operator_post
+      module_path: test_modules.operators.native_multiproc_based
+      dedicated_input_params:
+        msg: "b2 post level 1"
+    
+    - id_: "branch-2.3"
+      run_after: "branch-2.2"
+      name: operator_post
+      module_path: test_modules.operators.native_multiproc_based
+      dedicated_input_params:
+        msg: "b2 post level 2"
+  
+  # Definition of variations to run
+  variations:
+
+    repeat_groups: 1
