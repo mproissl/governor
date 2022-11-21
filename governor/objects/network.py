@@ -59,6 +59,9 @@ class Network():
         self._operators = {}
         self._edges = []
 
+        # Define null operator
+        self._null_operator_id = "__null__"
+
         # Prepare default values
         self._operator_defaults = _get_config_values(
             "config_payload_operator_parameters()",
@@ -81,6 +84,11 @@ class Network():
     def operators(self):
         """Operator configuration."""
         return self._operators
+
+    @property
+    def null_operator_id(self):
+        """Null operator identifier string."""
+        return self._null_operator_id
 
     def operator_sequence(self) -> list:
         """Sequence of operators based on edge order.
@@ -159,12 +167,13 @@ class Network():
             )
 
         # Add null operator
-        if "__null__" not in self._operators:
-            ids_.insert(0, "__null__")
-            self._operators["__null__"] = None
+        if self.null_operator_id not in self._operators:
+            ids_.insert(0, self.null_operator_id)
+            self._operators[self.null_operator_id] = None
         else:
             raise ImportError(f"{self._me} Protected identifier "\
-                              f"for null operator used: __null__ ")
+                              f"for null operator used: "\
+                              f"{self.null_operator_id}")
 
         # Initialize network edges with run_after blindness
         for idx_, id_ in enumerate(ids_):
