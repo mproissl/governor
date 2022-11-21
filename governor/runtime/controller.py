@@ -34,6 +34,8 @@ from governor.objects.network import Network as _Network
 from governor.objects.operator import Operator as _Operator
 from governor.objects.operator import OperatorSettings as _OperatorSettings
 from governor.runtime.memory import Memory as _Memory
+from governor.runtime.job import Jobs as _Jobs
+from governor.runtime.multiprocessing import Processors as _Processors
 from governor.utils.helpers import string_splitter as _string_splitter
 from governor.utils.helpers import strings_contain_whitespace as _strings_contain_whitespace
 
@@ -57,9 +59,11 @@ class Controller():
         self._me = "Controller():"
         self._config = None
         self._network = None
+        self._tree = None
         self._memory = _Memory()
         self._parallelize = False
         self._executed = []
+        self._completed = []
 
         # Load config
         self._load_configuration(config)
@@ -115,10 +119,14 @@ class Controller():
     def _create_network(self):
         """Create operator network from configuration."""
         try:
+            # Create network
             self._network = _Network(
                 id_ = _token_urlsafe(16),
                 config = self._config
             )
+            # Create tree from network
+            self._tree = self._network.operator_tree()
+
         # pylint: disable=broad-except
         except Exception as err:
             self._network = None
@@ -136,6 +144,11 @@ class Controller():
 
         # Prepare to parallelize (TODO: prep mp)
         self._parallelize = self._config.header_enable_multiprocessing
+
+    @property
+    def tree(self) -> dict:
+        """Operator tree"""
+        return self._tree
 
     def run(self):
         """Run operator network based on user configuration."""
@@ -191,6 +204,104 @@ class Controller():
                 # Log
                 self._executed.append(id_)
                 runs -= 1
+
+    def _run_parallel(self):
+        """Run operators in parallel given network architecture.
+           Note: this is currently limited to multiprocessing, i.e.
+           running operators in processes, and will be extended to
+           run alternatively in containers.
+        """
+        # Setup runtime variables
+        jobs = _Jobs()
+        processors = _Processors()
+
+        # Create jobs from null operator
+        for id_ in self.tree[self._network.null_operator_id]:
+            jobs.add({
+                "id_": id_,
+                "operator": self._get_operator(id_),
+                "config": self._network.operators[id_]
+            })
+
+        # Launch with null operator
+        self._run_multiprocessing(jobs, processors)
+
+    def _run_multiprocessing(self,
+                             jobs: _Jobs,
+                             processors: _Processors):
+        """Run operators recursively in processes.
+
+        Args:
+            jobs: Registry of operator job objects
+            processors: Registry of job processors
+        """
+        # Add jobs to new processor
+        processors.reset()
+        for id_, job in jobs.all.items():
+
+            # Block flag
+            block = False
+
+            # Check run_after status
+            run_after = job.config.run_after
+            if isinstance(run_after, str):
+                if run_after not in self._completed:
+                    block = True
+            elif isinstance(run_after, list):
+                if not all([id_after in self._completed\
+                           for id_after in run_after]):
+                    block = True
+            
+            # Ignore blocks
+            if block:
+                continue
+
+            # Update job online status
+            # TODO: tbd
+
+            # Add
+            processors.add_config(
+                id_ = id_,
+                operator = job.operator,
+                expected_return = job.config.save_output
+            )
+        
+        # Create new processor
+        new_proc_id = processors.create()
+
+        # Start new processor
+        processors.get(new_proc_id).start()
+
+        # Start blocking
+        block = True
+
+        # Update job online status
+        # Wait until first process finished, then update job and trigger next one
+        while block:
+
+            # Vars
+            jobs_completed = []
+            processors_completed = []
+
+            # Errors
+            if processors.any_errors():
+                error_messages = processors.error_messages()
+                processors.terminate()
+                raise ValueError(f"{self._me} Processor errors: "\
+                                 f"{error_messages}")
+
+            # Completed operators/jobs
+            completed_operators = processors.done_operators()
+
+            # Save return to memory
+
+            # Update respective jobs
+
+            # Create new jobs
+
+            # Completed processors - clean up
+
+            # All done
 
     def _get_operator(self, id_: str) -> _Operator:
         """Retrieve operator by given identifier.
