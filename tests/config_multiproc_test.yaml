@@ -18,48 +18,73 @@ payload:
   # Defintion of operators to run
   operators:
     
-    - id_: "branch-1.1"
-      name: operator_task
-      module_path: test_modules.operators.native_multiproc_based
-      dedicated_input_params:
-        iterations: 10
-      shared_input_params: "process_time_sec"
-    
-    - id_: "branch-1.2"
-      run_after: "branch-1.1"
-      name: operator_post
-      module_path: test_modules.operators.native_multiproc_based
-      dedicated_input_params:
-        msg: "b1 post level 1"
-    
-    - id_: "branch-1.3"
-      run_after: "branch-1.2"
-      name: operator_post
-      module_path: test_modules.operators.native_multiproc_based
-      dedicated_input_params:
-        msg: "b1 post level 2"
-    
-    - id_: "branch-2.1"
+    - id_: "A"
       run_after: "__null__"
-      name: operator_task
+      name: job_noreturn
       module_path: test_modules.operators.native_multiproc_based
       dedicated_input_params:
-        iterations: 20
+        id_: "A"
+        iterations: 6
       shared_input_params: "process_time_sec"
     
-    - id_: "branch-2.2"
-      run_after: "branch-2.1"
-      name: operator_post
+    - id_: "C"
+      run_after: "A"
+      name: job_noreturn
       module_path: test_modules.operators.native_multiproc_based
       dedicated_input_params:
-        msg: "b2 post level 1"
+        id_: "C"
+        iterations: 6
+      shared_input_params: "process_time_sec"
     
-    - id_: "branch-2.3"
-      run_after: "branch-2.2"
-      name: operator_post
+    - id_: "E"
+      run_after: "C"
+      name: job_noreturn
       module_path: test_modules.operators.native_multiproc_based
       dedicated_input_params:
-        msg: "b2 post level 2"
+        id_: "E"
+        iterations: 6
+      shared_input_params: "process_time_sec"
+    
+    - id_: "G"
+      run_after:
+        - "E"
+        - "F"
+      name: job_return
+      module_path: test_modules.operators.native_multiproc_based
+      dedicated_input_params:
+        id_: "G"
+        msg: "ALL DONE"
+      shared_input_params: "process_time_sec"
+    
+    - id_: "B"
+      run_after: "__null__"
+      name: job_noreturn
+      module_path: test_modules.operators.native_multiproc_based
+      dedicated_input_params:
+        id_: "B"
+        iterations: 6
+      shared_input_params: "process_time_sec"
+    
+    - id_: "D"
+      run_after:
+        - "A"
+        - "B"
+      name: job_noreturn
+      module_path: test_modules.operators.native_multiproc_based
+      dedicated_input_params:
+        id_: "D"
+        iterations: 6
+      shared_input_params: "process_time_sec"
+    
+    - id_: "F"
+      run_after: "D"
+      repeat: 3
+      name: job_noreturn
+      module_path: test_modules.operators.native_multiproc_based
+      dedicated_input_params:
+        id_: "F"
+        iterations: 6
+      shared_input_params: "process_time_sec"
   
   # Definition of variations to run
   variations:
