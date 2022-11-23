@@ -360,6 +360,11 @@ class Processor():
         """Number of processes."""
         return len(self._processes)
 
+    @property
+    def operator_ids(self) -> list:
+        """List of operator identifiers."""
+        return list(self._operators.keys())
+
 class Processors():
     """Container class for processors."""
 
@@ -473,6 +478,11 @@ class Processors():
         """Retrieve all processors."""
         return self._processors
 
+    @property
+    def num_processors(self) -> int:
+        """Number of processors."""
+        return len(self.all)
+
     def any_errors(self) -> bool:
         """Flag if any errors in processes found."""
         return len(self.error_messages()) > 0
@@ -517,7 +527,11 @@ class Processors():
                     del self._processors[id_]
 
     def done_operators(self) -> list:
-        """List of operators with done state."""
+        """List of operators with done state.
+        
+        Returns:
+            List of operator IDs
+        """
         done = []
         for operator_id, processor_id in self._operator_map.items():
             if self.get(processor_id).is_done(operator_id):
@@ -525,9 +539,28 @@ class Processors():
         return done
 
     def done_processors(self) -> list:
-        """List of processors with only operators in done state."""
+        """List of processors with only operators in done state.
+        
+        Returns:
+            List of processor IDs
+        """
         done = []
         for id_, processor in self._processors.items():
             if processor.all_done():
                 done.append(id_)
         return done
+
+    def full_operator_match(self, operator_ids: list) -> list:
+        """List of processors complete-matching full list of respective operators.
+
+        Args:
+            operator_ids: List of operator identifiers
+        
+        Returns:
+            List of processor IDs
+        """
+        matched = []
+        for proc_id, processor in self._processors.items():
+            if all([id_ in operator_ids for id_ in processor.operator_ids]):
+                matched.append(proc_id)
+        return matched
