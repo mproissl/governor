@@ -257,7 +257,7 @@ class Controller():
                 continue
 
             # Update job online status
-            # TODO: tbd
+            jobs.get(id_).online = True
 
             # Add
             processors.add_config(
@@ -279,10 +279,6 @@ class Controller():
         # Wait until first process finished, then update job and trigger next one
         while block:
 
-            # Vars
-            jobs_completed = []
-            processors_completed = []
-
             # Errors
             if processors.any_errors():
                 error_messages = processors.error_messages()
@@ -293,15 +289,47 @@ class Controller():
             # Completed operators/jobs
             completed_operators = processors.done_operators()
 
-            # Save return to memory
+            # Process completed jobs
+            for id_ in completed_operators:
 
-            # Update respective jobs
+                # Write return to memory
+                cfg = jobs.get(id_).config
+                if cfg.save_output:
+                    storage_name = cfg.shared_output_name if cfg.shared_output_name is not None\
+                                                          else id_
+                    self._memory.shared.update(storage_name,\
+                                               processors.get(id_, by_operator=True).return_value(id_),\
+                                               create=True)
 
-            # Create new jobs
+                # Update job repetition
+                jobs.get(id_).repeat -= 1
 
-            # Completed processors - clean up
+                # Repeat this job/operator
+                # Note: nothing to be done,
+                #       job still in list
+                #if jobs.get(id_).repeat > 0:
+
+                # New job
+                if jobs.get(id_).repeat == 0:
+                    if id_ in self.tree:
+                        for next_id_ in self.tree[id_]:
+                            if next_id_ not in jobs.all:
+                                jobs.add({
+                                    "id_": next_id_,
+                                    "operator": self._get_operator(next_id_),
+                                    "config": self._network.operators[next_id_]
+                                })
+                    # Delete old
+                    jobs.delete(id_)
+
+            # Cleanup completed processors
+            for proc_id in processors.full_operator_match(completed_operators):
+                if processors.get(proc_id).all_done():
+                    processors.terminate(proc_id)
 
             # All done
+            if processors.num_processors == 0:
+                block = False
 
     def _get_operator(self, id_: str) -> _Operator:
         """Retrieve operator by given identifier.
