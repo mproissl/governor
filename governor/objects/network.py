@@ -175,117 +175,145 @@ class Network():
                               f"for null operator used: "\
                               f"{self.null_operator_id}")
 
-        # Initialize network edges with run_after blindness
+        # Initialize network edges
+        remaining_ids_ = []
         for idx_, id_ in enumerate(ids_):
 
-            # Skip first
+            # Skip null operator
             if idx_ == 0:
                 continue
 
-            # Create new edge
+            # Load config
+            cfg = self._operators[id_]
+
+            # Case: run_after instructions
+            if cfg.exists("run_after"):
+                if isinstance(cfg.run_after, str):
+                    self._edges.append(self._Link(
+                        source = cfg.run_after,
+                        target = id_
+                    ))
+                elif isinstance(cfg.run_after, list):
+                    for after_ in cfg.run_after:
+                        self._edges.append(self._Link(
+                            source = after_,
+                            target = id_
+                        ))
+            
+            # Case: no order instructions
+            else:
+                remaining_ids_.append(id_)
+        
+        # Append remaining ids
+        for id_ in remaining_ids_:
             self._edges.append(self._Link(
-                source = ids_[idx_ - 1],
+                source = self._edges[-1].target\
+                         if len(self.edges) > 0\
+                         else self.null_operator_id,
                 target = id_
             ))
 
+        # NOTE: the following code can be adopted to create mixtures
+        # of run_after and none instructions:
+        #
         # Apply run_after instructions
-        n_edges = len(self._edges)
-        for _ in range(n_edges):
-
-            # Change params
-            insert_edge = None
-            remove_edge = None
-            update_edge = None
-            update_now = False
-            update_later = False
-
-            # Evaluate
-            for idx_, edge in enumerate(self._edges):
-
-                # Target operator config
-                target_cfg = self._operators[edge.target]
-
-                # Skip without run_after
-                if not target_cfg.exists("run_after"):
-                    continue
-
-                # Expected source of target operator
-                expected_source_ = target_cfg.run_after
-
-                # Single instruction
-                if isinstance(expected_source_, str):
-                    # Skip if already paired
-                    if edge.source == expected_source_:
-                        continue
-
-                    # Find new position based on source (priority!)
-                    for idx__, edge_ in enumerate(self._edges):
-                        # Skip myself
-                        if idx__ == idx_:
-                            continue
-
-                        # Found first source match
-                        if edge_.source == expected_source_:
-                            # Check if next one is match too
-                            if idx__+1 < n_edges:
-                                if (self._edges[idx__+1].source
-                                    == expected_source_):
-                                    continue
-
-                            # Flag to update
-                            update_now = True
-
-                        # Keep track of target matches
-                        elif edge_.target == expected_source_:
-                            update_later = True
-
-                        # Prepare updates
-                        if update_now or update_later:
-                            insert_edge = idx__+1, self._Link(
-                                source = expected_source_,
-                                target = edge.target
-                            )
-                            remove_edge = idx_+1 if idx__ < idx_ else idx_
-                            update_edge = remove_edge
-
-                        # Stop here
-                        if update_now:
-                            break
-
-                # Multiple instructions
-                elif isinstance(expected_source_, list):
-
-                    # Counter
-                    found_ = 0
-
-                    # Find new position
-                    for idx__, edge_ in enumerate(self._edges):
-                        if edge_.source in expected_source_:
-                            found_ += 1
-                            if found_ == len(expected_source_):
-
-                                # Prepare updates
-                                insert_edge = idx__+1, self._Link(
-                                    source = expected_source_,
-                                    target = edge.target
-                                )
-                                remove_edge = idx_+1 if idx__ < idx_ else idx_
-                                update_edge = remove_edge
-                                update_now = True
-                                break
-
-                if update_now or update_later:
-                    break
-
-            # Update
-            if update_now or update_later:
-                self._edges.insert(insert_edge[0], insert_edge[1])
-                del self._edges[remove_edge]
-                if update_edge < n_edges:
-                    if (self._edges[update_edge].source ==
-                        insert_edge[1].target):
-                        self._edges[update_edge].source = \
-                            self._edges[update_edge-1].target
+        #n_edges = len(self._edges)
+        #for _ in range(n_edges):
+        #
+        #    # Change params
+        #    insert_edge = None
+        #    remove_edge = None
+        #    update_edge = None
+        #    update_now = False
+        #    update_later = False
+        #
+        #    # Evaluate
+        #    for idx_, edge in enumerate(self._edges):
+        #
+        #        # Target operator config
+        #        target_cfg = self._operators[edge.target]
+        #
+        #        # Skip without run_after
+        #        if not target_cfg.exists("run_after"):
+        #            continue
+        #
+        #        # Expected source of target operator
+        #        expected_source_ = target_cfg.run_after
+        #
+        #        # Single instruction
+        #        if isinstance(expected_source_, str):
+        #            # Skip if already paired
+        #            if edge.source == expected_source_:
+        #                continue
+        #
+        #            # Find new position based on source (priority!)
+        #            for idx__, edge_ in enumerate(self._edges):
+        #                # Skip myself
+        #                if idx__ == idx_:
+        #                    continue
+        #
+        #                # Found first source match
+        #                if edge_.source == expected_source_:
+        #                    # Check if next one is match too
+        #                    if idx__+1 < n_edges:
+        #                        if (self._edges[idx__+1].source
+        #                            == expected_source_):
+        #                            continue
+        #
+        #                    # Flag to update
+        #                    update_now = True
+        #
+        #                # Keep track of target matches
+        #                elif edge_.target == expected_source_:
+        #                    update_later = True
+        #
+        #                # Prepare updates
+        #                if update_now or update_later:
+        #                    insert_edge = idx__+1, self._Link(
+        #                        source = expected_source_,
+        #                        target = edge.target
+        #                    )
+        #                    remove_edge = idx_+1 if idx__ < idx_ else idx_
+        #                    update_edge = remove_edge
+        #
+        #                # Stop here
+        #                if update_now:
+        #                    break
+        #
+        #        # Multiple instructions
+        #        elif isinstance(expected_source_, list):
+        #
+        #            # Counter
+        #            found_ = 0
+        #
+        #            # Find new position
+        #            for idx__, edge_ in enumerate(self._edges):
+        #                if edge_.source in expected_source_:
+        #                    found_ += 1
+        #                    if found_ == len(expected_source_):
+        #
+        #                        # Prepare updates
+        #                        insert_edge = idx__+1, self._Link(
+        #                            source = expected_source_,
+        #                            target = edge.target
+        #                        )
+        #                        remove_edge = idx_+1 if idx__ < idx_ else idx_
+        #                        update_edge = remove_edge
+        #                        update_now = True
+        #                        break
+        #
+        #        if update_now or update_later:
+        #            break
+        #
+        #    # Update
+        #    if update_now or update_later:
+        #        self._edges.insert(insert_edge[0], insert_edge[1])
+        #        del self._edges[remove_edge]
+        #        if update_edge < n_edges:
+        #            if (self._edges[update_edge].source ==
+        #                insert_edge[1].target):
+        #                self._edges[update_edge].source = \
+        #                    self._edges[update_edge-1].target
 
     def _operator_id(self, operator_config: dict) -> str:
         """Return unique identifier of operator.
