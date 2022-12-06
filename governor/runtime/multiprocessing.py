@@ -36,7 +36,7 @@ class OperatorProcess(_Process):
 
     def __init__(self,
                  operator: _Operator,
-                 name: str = None,
+                 name: str = "",
                  return_queue: _Queue = None,
                  standby_event: _Event = None,
                  start_event: _Event = None,
@@ -146,7 +146,7 @@ class Processor():
                 if id_ in expected_returns:
                     if expected_returns[id_]:
                         self._return_queues[id_] = _Queue()
-                        self._return_queues[id_].put(None)
+                        #self._return_queues[id_].put(None)
                     else:
                         self._return_queues[id_] = None
                 else:
@@ -300,11 +300,22 @@ class Processor():
         for id_, operator in self._operators.items():
             self._processes[id_] = OperatorProcess(
                 operator=operator,
+                name=id_,
+                return_queue=self.return_queue(id_),
                 standby_event=self._standby_event(id_),
                 start_event=self.start_event(id_),
                 done_event=self.done_event(id_),
                 error_event=self.error_event(id_)
             )
+
+    def start_processes(self):
+        """Start all operator processes."""
+        for id_, process in self._processes.items():
+            if process is not None:
+                self._processes[id_].start()
+            else:
+                raise RuntimeError(f"{self._me} Operator ID {id_} "\
+                                   f"does not have a process yet.")
 
     def get_process(self, id_: str) -> OperatorProcess:
         """Retrieve operator process by identifier.
@@ -346,7 +357,7 @@ class Processor():
 
         # pylint: disable=broad-except
         except Exception:
-            print("DEBUG: terminate_process() exception")
+            print("DEBUG: terminate_process() exception", id_)
             pass
         # pylint: enable=broad-except
 
@@ -384,7 +395,6 @@ class Processors():
         self._operators = {}
         self._expected_returns = None
         self._standby_events = None
-        self._operator_map = {}
 
     def add_config(self,
                    id_: str,
@@ -429,10 +439,17 @@ class Processors():
         """Create new processor.
         
         Returns:
-            Processor ID
+            Processor ID or None
         """
+        #  Sanity check: number of operators
+        if len(self._operators) == 0:
+            return None
+
         # New processor ID
-        processor_id = "P" + str(len(self._processors)+1)
+        processor_id = "1"\
+                       if self.num_processors == 0\
+                       else str(max([int(id_)\
+                            for id_ in self._processors.keys()])+1)
 
         # Create processor
         try:
@@ -509,11 +526,12 @@ class Processors():
             by_operator: (Optional) Flag to select by
                          operator identifier
         """
-        print("Terminating processes ...")
         if id_ is None:
             for processor in self._processors.values():
                 processor.terminate_processes()
             self._processors = {}
+            self._operator_map = {}
+            self.reset()
 
         else:
             processor = self.get(id_, by_operator)
@@ -522,9 +540,33 @@ class Processors():
                     processor.terminate_process(id_)
                     if processor.all_done():
                         del self._processors[processor.processor_id]
+                    if id_ in self._operator_map:
+                        del self._operator_map[id_]
                 else:
                     processor.terminate_processes()
                     del self._processors[id_]
+                    for operator_id in self.operators(id_):
+                        del self._operator_map[operator_id]
+
+    def operators(self, processor_id: str = None) -> list:
+        """List of operators with done state.
+
+        Args:
+            processor_id: (Optional) ID of respective processor
+        
+        Returns:
+            List of operator IDs
+        """
+        # All IDs
+        if processor_id is None:
+            return list(self._operator_map.keys())
+
+        # Mapped to processor ID
+        ids_ = []
+        for operator_id, processor_id_ in self._operator_map.items():
+            if processor_id == processor_id_:
+                ids_.append(operator_id)
+        return ids_
 
     def done_operators(self) -> list:
         """List of operators with done state.
@@ -559,6 +601,11 @@ class Processors():
         Returns:
             List of processor IDs
         """
+        # Sanity check: non-empty list
+        if len(operator_ids) == 0:
+            return []
+
+        # Search
         matched = []
         for proc_id, processor in self._processors.items():
             if all([id_ in operator_ids for id_ in processor.operator_ids]):
