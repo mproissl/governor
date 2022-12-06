@@ -1,0 +1,73 @@
+# HEADER
+header:
+  
+  # General
+  name: Governor Multiprocessing Test Configuration
+  description: This is a simple test configuration script.
+
+  # Global settings
+  enable_multiprocessing: True
+
+  # Shared data
+  shared_data:
+    a: 0.
+
+# PAYLOAD
+payload:
+  
+  # Defintion of operators to run
+  operators:
+    
+    - id_: "A"
+      run_after: "__null__"
+      name: function
+      module_path: test_modules.operators.native_multiproc_based
+      dedicated_input_params:
+        id_: "A"
+        fcn: "plus"
+        b: 100
+      shared_input_params: "a"
+      save_output: True
+      shared_output_name: "a"
+    
+    - id_: "B"
+      run_after: "A"
+      name: function
+      module_path: test_modules.operators.native_multiproc_based
+      dedicated_input_params:
+        id_: "B"
+        fcn: "multiply"
+        b: 3
+      shared_input_params: "a"
+      save_output: True
+      shared_output_name: "x1"
+    
+    - id_: "C"
+      run_after: "A"
+      name: function
+      module_path: test_modules.operators.native_multiproc_based
+      dedicated_input_params:
+        id_: "C"
+        fcn: "multiply"
+        b: 6
+      shared_input_params: "a"
+      save_output: True
+      shared_output_name: "x2"
+    
+    - id_: "D"
+      run_after: "C"
+      name: function
+      module_path: test_modules.operators.native_multiproc_based
+      dedicated_input_params:
+        id_: "D"
+        fcn: "plus"
+      shared_input_params:
+        - "x1 as a"
+        - "x2 as b"
+      save_output: True
+      shared_output_name: "result"
+  
+  # Definition of variations to run
+  variations:
+
+    repeat_groups: 1
