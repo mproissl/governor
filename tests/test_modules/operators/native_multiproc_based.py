@@ -44,7 +44,8 @@ def function(id_: str, fcn: str, a: float, b: float):
       print(datetime.now().strftime("%H:%M:%S")+
           " RUN "+
           id_+ ": "+
-          _inspect.currentframe().f_code.co_name,
+          _inspect.currentframe().f_code.co_name+
+          "." + fcn,
           flush=True
          )
       if fcn == "plus":
