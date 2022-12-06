@@ -119,7 +119,6 @@ class Network():
 
         # Init operator tree
         tree_ = {}
-        print(self.edges_str)
 
         # Single operator case
         if len(self._operators) == 1:
