@@ -45,7 +45,7 @@ class Job():
         self._id = id_
         self._operator = operator
         self._config = config
-        self._repeat = 1
+        self._repeat = config.repeat
         self._online = False
 
     @property
@@ -80,6 +80,10 @@ class Job():
     @online.setter
     def online(self, value: bool):
         self._online = value
+
+    def completed_repetition(self):
+        """Register one job repetition."""
+        self.repeat = self.repeat - 1
 
 
 class Jobs():
@@ -164,3 +168,8 @@ class Jobs():
     def all(self) -> dict:
         """Retrieve all jobs."""
         return self._jobs
+
+    @property
+    def num_jobs(self) -> int:
+        """Number of jobs."""
+        return len(self.all)
