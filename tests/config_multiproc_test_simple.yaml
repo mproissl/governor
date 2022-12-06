@@ -1,0 +1,54 @@
+# HEADER
+header:
+  
+  # General
+  name: Governor Multiprocessing Test Configuration
+  description: This is a simple test configuration script.
+
+  # Global settings
+  enable_multiprocessing: True
+
+  # Shared data
+  shared_data:
+    process_time_sec: 10
+
+# PAYLOAD
+payload:
+  
+  # Defintion of operators to run
+  operators:
+    
+    - id_: "A"
+      run_after: "__null__"
+      name: job_noreturn
+      module_path: test_modules.operators.native_multiproc_based
+      dedicated_input_params:
+        id_: "A"
+        iterations: 2
+      shared_input_params: "process_time_sec"
+        
+    - id_: "C"
+      run_after:
+        - "A"
+        - "B"
+      name: job_return
+      module_path: test_modules.operators.native_multiproc_based
+      dedicated_input_params:
+        id_: "C"
+        msg: "ALL DONE"
+      shared_input_params: "process_time_sec"
+      save_output: True
+    
+    - id_: "B"
+      run_after: "__null__"
+      name: job_noreturn
+      module_path: test_modules.operators.native_multiproc_based
+      dedicated_input_params:
+        id_: "B"
+        iterations: 6
+      shared_input_params: "process_time_sec"
+  
+  # Definition of variations to run
+  variations:
+
+    repeat_groups: 1
