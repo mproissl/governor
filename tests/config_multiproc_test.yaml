@@ -24,7 +24,7 @@ payload:
       module_path: test_modules.operators.native_multiproc_based
       dedicated_input_params:
         id_: "A"
-        iterations: 6
+        iterations: 2
       shared_input_params: "process_time_sec"
     
     - id_: "C"
@@ -33,7 +33,7 @@ payload:
       module_path: test_modules.operators.native_multiproc_based
       dedicated_input_params:
         id_: "C"
-        iterations: 6
+        iterations: 4
       shared_input_params: "process_time_sec"
     
     - id_: "E"
@@ -42,7 +42,7 @@ payload:
       module_path: test_modules.operators.native_multiproc_based
       dedicated_input_params:
         id_: "E"
-        iterations: 6
+        iterations: 4
       shared_input_params: "process_time_sec"
     
     - id_: "G"
@@ -55,6 +55,7 @@ payload:
         id_: "G"
         msg: "ALL DONE"
       shared_input_params: "process_time_sec"
+      save_output: True
     
     - id_: "B"
       run_after: "__null__"
@@ -83,7 +84,7 @@ payload:
       module_path: test_modules.operators.native_multiproc_based
       dedicated_input_params:
         id_: "F"
-        iterations: 6
+        iterations: 2
       shared_input_params: "process_time_sec"
   
   # Definition of variations to run
