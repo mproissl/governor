@@ -26,9 +26,57 @@ from multiprocessing import Process as _Process
 from multiprocessing import Queue as _Queue
 from multiprocessing import Event as _Event
 from time import sleep as _sleep
+from time import time_ns as _time_ns
+from os import getpid as _getpid
 
 # Local Dependencies
 from governor.objects.operator import Operator as _Operator
+
+
+class ProcessMetaData():
+    """Abstraction of meta data from a process."""
+
+    def __init__(self,
+                 start_time_ns: int,
+                 pid: int):
+        """Initialize meta data object.
+
+        Args:
+            start_time_ns: Number of nanoseconds that have passed
+                           since the epoch (Jan 1, 1970 at
+                           00:00:00 UTC)
+            pid: Process ID by operating system
+        """
+        self._start_time_ns = start_time_ns
+        self._end_time_ns = start_time_ns
+        self._pid = pid
+
+    def end_time_ns(self, time_ns: int):
+        """Set end time of process in nanoseconds since epoch.
+        
+        Args:
+            time_ns: Number of nanoseconds that have passed
+                     since the epoch (Jan 1, 1970 at
+                     00:00:00 UTC)
+
+        Returns:
+            Self
+        """
+        self._end_time_ns = time_ns
+        return self
+    
+    @property
+    def dict(self) -> dict:
+        """Returns dictionary version of meta data.
+
+        Note: Milliseconds are returned but with
+              nanosecond precision.        
+        """
+        return {
+            "start_time_ms": self._start_time_ns/1000,
+            "end_time_ms": self._end_time_ns/1000,
+            "pid": self._pid
+        }
 
 
 class OperatorProcess(_Process):
@@ -84,14 +132,26 @@ class OperatorProcess(_Process):
         if self._start_event is not None:
             self._start_event.set()
 
+        # Register meta data
+        meta = ProcessMetaData(
+            start_time_ns = _time_ns(),
+            pid = _getpid()
+        )
+
         # Execute
         try:
             if self._return_queue is None:
                 _ = self._operator.run()
             else:
-                self._return_queue.put(self._operator.run().response)
+                self._return_queue.put(
+                    (self._operator.run().response,
+                     meta.end_time_ns(_time_ns()).dict)
+                )
         except RuntimeError:
-            self._return_queue.put(self._operator.exception)
+            self._return_queue.put(
+                (self._operator.exceptione,
+                 meta.end_time_ns(_time_ns()).dict)
+            )
             self._error_event.set()
             pass
 
