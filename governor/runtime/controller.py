@@ -310,8 +310,9 @@ class Controller():
                 if cfg.save_output:
                     storage_name = cfg.shared_output_name if cfg.shared_output_name is not None\
                                                           else id_
+                    data, _ = processors.get(id_, by_operator=True).return_value(id_)
                     self._memory.shared.update(storage_name,\
-                                               processors.get(id_, by_operator=True).return_value(id_),\
+                                               data,\
                                                create=True)
 
                 # Update job repetition
