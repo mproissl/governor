@@ -152,10 +152,13 @@ class Controller():
 
     def run(self):
         """Run operator network based on user configuration."""
+        # Parallel execution
+        if self._parallelize:
+            self._run_parallel()
 
         # Sequential execution
-        #if not self._parallelize:
-        self._run_sequential()
+        else:
+            self._run_sequential()
 
     def _run_sequential(self):
         """Run operators in sequential order disregarding network
@@ -224,17 +227,21 @@ class Controller():
             })
 
         # Launch with null operator
-        self._run_multiprocessing(jobs, processors)
+        self._run_multiprocessing(jobs, processors, init=True)
 
     def _run_multiprocessing(self,
                              jobs: _Jobs,
-                             processors: _Processors):
+                             processors: _Processors,
+                             init: bool = False):
         """Run operators recursively in processes.
 
         Args:
             jobs: Registry of operator job objects
             processors: Registry of job processors
+            init: (Optional) flag for initial run
         """
+        #print("\n>> running _run_multiprocessing()", flush=True)
+
         # Add jobs to new processor
         processors.reset()
         for id_, job in jobs.all.items():
@@ -243,17 +250,18 @@ class Controller():
             block = False
 
             # Check run_after status
-            run_after = job.config.run_after
-            if isinstance(run_after, str):
-                if run_after not in self._completed:
-                    block = True
-            elif isinstance(run_after, list):
-                if not all([id_after in self._completed\
-                           for id_after in run_after]):
-                    block = True
+            if not init:
+                run_after = job.config.run_after
+                if isinstance(run_after, str):
+                    if run_after not in self._completed:
+                        block = True
+                elif isinstance(run_after, list):
+                    if not all([id_after in self._completed\
+                            for id_after in run_after]):
+                        block = True
             
-            # Ignore blocks
-            if block:
+            # Ignore blocks and online jobs
+            if block or job.online:
                 continue
 
             # Update job online status
@@ -265,12 +273,15 @@ class Controller():
                 operator = job.operator,
                 expected_return = job.config.save_output
             )
-        
+
         # Create new processor
         new_proc_id = processors.create()
 
         # Start new processor
-        processors.get(new_proc_id).start()
+        if new_proc_id is not None:
+            #print("+ new processor " + new_proc_id, flush=True)
+            processors.get(new_proc_id).create_processes()
+            processors.get(new_proc_id).start_processes()
 
         # Start blocking
         block = True
@@ -281,6 +292,7 @@ class Controller():
 
             # Errors
             if processors.any_errors():
+                print("ERRORs")
                 error_messages = processors.error_messages()
                 processors.terminate()
                 raise ValueError(f"{self._me} Processor errors: "\
@@ -288,9 +300,10 @@ class Controller():
 
             # Completed operators/jobs
             completed_operators = processors.done_operators()
+            new_completed_opeartors = [id_ for id_ in completed_operators if id_ in jobs.all]
 
             # Process completed jobs
-            for id_ in completed_operators:
+            for id_ in new_completed_opeartors:
 
                 # Write return to memory
                 cfg = jobs.get(id_).config
@@ -302,34 +315,45 @@ class Controller():
                                                create=True)
 
                 # Update job repetition
-                jobs.get(id_).repeat -= 1
+                jobs.get(id_).completed_repetition()
 
                 # Repeat this job/operator
-                # Note: nothing to be done,
-                #       job still in list
-                #if jobs.get(id_).repeat > 0:
+                # Note: online update online status
+                if jobs.get(id_).repeat > 0:
+                    jobs.get(id_).online = False
 
                 # New job
-                if jobs.get(id_).repeat == 0:
+                elif jobs.get(id_).repeat == 0:
                     if id_ in self.tree:
                         for next_id_ in self.tree[id_]:
                             if next_id_ not in jobs.all:
+                                #print("+ add job: " + next_id_, flush=True)
                                 jobs.add({
                                     "id_": next_id_,
                                     "operator": self._get_operator(next_id_),
                                     "config": self._network.operators[next_id_]
                                 })
+
+                    # Register completion
+                    self._completed.append(id_)
+
                     # Delete old
                     jobs.delete(id_)
 
             # Cleanup completed processors
-            for proc_id in processors.full_operator_match(completed_operators):
-                if processors.get(proc_id).all_done():
-                    processors.terminate(proc_id)
+            if len(new_completed_opeartors) > 0:
+                for proc_id in processors.full_operator_match(completed_operators):
+                    if processors.get(proc_id).all_done():
+                        #print("+ terminating processor: " + proc_id, flush=True)
+                        processors.terminate(proc_id)
 
             # All done
-            if processors.num_processors == 0:
+            if (len(new_completed_opeartors) > 0 or processors.num_processors == 0):
                 block = False
+        
+        # Process jobs
+        if jobs.num_jobs > 0:
+            self._run_multiprocessing(jobs, processors)
 
     def _get_operator(self, id_: str) -> _Operator:
         """Retrieve operator by given identifier.
