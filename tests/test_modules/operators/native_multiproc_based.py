@@ -3,6 +3,7 @@
 import inspect as _inspect
 from time import sleep
 from datetime import datetime
+from math import sqrt
 
 
 def job_noreturn(id_: str, iterations: int, process_time_sec: int):
@@ -37,3 +38,28 @@ def job_return(id_: str, process_time_sec: int, msg: str):
           id_,
           flush=True)
     return msg
+
+def function(id_: str, fcn: str, a: float, b: float):
+      """Addition task with return"""
+      print(datetime.now().strftime("%H:%M:%S")+
+          " RUN "+
+          id_+ ": "+
+          _inspect.currentframe().f_code.co_name,
+          flush=True
+         )
+      if fcn == "plus":
+            return a+b
+      elif fcn == "minus":
+            return a-b
+      elif fcn == "multiply":
+            return a*b
+      elif fcn == "divide":
+            return a/b
+      elif fcn == "power":
+            return a**b
+      elif fcn == "sqrt_plus":
+            return sqrt(a+b)
+      elif fcn == "sqrt_minus":
+            return sqrt(a-b)
+      else:
+            raise ValueError("Unknown function call: "+fcn)
