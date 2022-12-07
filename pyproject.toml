@@ -18,6 +18,9 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent"
 ]
+include = [
+    { path = "governor/ui", format = ["sdist", "wheel"] },
+]
 
 [tool.poetry.dependencies]
 python = "^3.8"
