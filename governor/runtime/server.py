@@ -80,5 +80,4 @@ class Server():
         _uvicorn.run(
             self._app,
             host = self._host,
-            port = self._port,
-            reload = True)
+            port = self._port)
